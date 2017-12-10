@@ -1,6 +1,7 @@
 import numpy, math, random
 import Functions as func
 import Analyzing_MD as analysis
+import Markov_Andersen as ma
 
 def InitPosition(N, L):
     R_initial = numpy.zeros((N, 3)) + 0.0
@@ -78,13 +79,16 @@ def simulate(steps, h, thermostat):
             nA = nF/M
             nV[i] = VerletNextV(V[i], A[i], nA, h)
 
-        if thermostat:
-            prob = 0.01
+        if thermostat == "andersen":
+            prob = 0.8
             sigma = (T/M)**0.5
             for i in range(len(R)):
                 if (numpy.random.ranf() < prob):
                     #print("collision")
                     nV[i] = sigma * numpy.random.randn(3)
+
+        if thermostat == "ma":
+            print(ma.MA_step(nV, T, M))
 
         R = nR.copy()
         V = nV.copy()
@@ -94,27 +98,33 @@ def simulate(steps, h, thermostat):
 
 
     return [E, R_all, V_all]
-"""
-output = simulate(800, h, 1)
+
+h = 0.032
+T = 0.7
+T0 = 0.728
+L = 4.2323167
+N = 64
+M = 48.0
+output = simulate(200, h, "andersen")
 E = output[0]
 V_all = output[2]
 R_all = output[1]
+temps = analysis.calc_temp_all(V_all, M, N)
 #momentum = analysis.calc_momentum(V_all, M)
 #vvc = analysis.calc_vvc(V_all)
 #print(analysis.myDiffusionConstant(vvc))
-kvecs = analysis.my_legal_kvecs(5, L)
-sk = analysis.calc_Sk(R_all, 5, L, 250)
-kmags = [numpy.linalg.norm(kvec) for kvec in kvecs]
-unique_kmags = numpy.unique(kmags)
-unique_sk = numpy.zeros(len(unique_kmags))
-for iukmag in range(len(unique_kmags)):
-    kmag = unique_kmags[iukmag]
-    idx2avg = numpy.where(kmags==kmag)
-    unique_sk[iukmag] = numpy.mean(sk[idx2avg])
+#kvecs = analysis.my_legal_kvecs(5, L)
+#sk = analysis.calc_Sk(R_all, 5, L, 250)
+#kmags = [numpy.linalg.norm(kvec) for kvec in kvecs]
+#unique_kmags = numpy.unique(kmags)
+#unique_sk = numpy.zeros(len(unique_kmags))
+#for iukmag in range(len(unique_kmags)):
+#    kmag = unique_kmags[iukmag]
+#    idx2avg = numpy.where(kmags==kmag)
+#    unique_sk[iukmag] = numpy.mean(sk[idx2avg])
 
-pair_corr = analysis.calc_pair_corr(R_all, L, N, 100, L/100, 250)
+#pair_corr = analysis.calc_pair_corr(R_all, L, N, 100, L/100, 250)
 #temps = analysis.calc_temp_all(V_all, M, N)
-numpy.savetxt("C:/Users/Justin Baker/Desktop/7kmags0.5.txt", unique_kmags)
-numpy.savetxt("C:/Users/Justin Baker/Desktop/7sk0.5.txt", unique_sk)
-numpy.savetxt("C:/Users/Justin Baker/Desktop/7pc0.5.txt", pair_corr)
-"""
+numpy.savetxt("C:/Users/Justin Baker/Desktop/temps_ma_squared_0.5.txt", temps)
+#numpy.savetxt("C:/Users/Justin Baker/Desktop/7sk0.5.txt", unique_sk)
+#numpy.savetxt("C:/Users/Justin Baker/Desktop/7pc0.5.txt", pair_corr)
